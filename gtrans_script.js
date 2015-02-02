@@ -1,10 +1,16 @@
 var gtrans = new Object()
 
 gtrans.handleTranslate = function(text) {
-	var firstWord = text.trim().split(" ")[0]
-	var translations = this.translate(text)
+	var firstWord = text.trim().split(" ")[0].replace(/\W/g,"")
+	var translations = this.translate(firstWord)
 	var viewElem = this.createView(translations)
+	this.cleanTranslationView()
 	this.show(viewElem)
+	this.playSound(firstWord)
+}
+
+gtrans.playSound = function(text) {
+	new Audio('https://translate.google.pl/translate_tts?q='+encodeURI(text)+'&tl=en').play()
 }
 
 gtrans.show = function(viewElem) {
@@ -32,7 +38,7 @@ gtrans.translate = function(text) {
 	var translateUrl = 'https://translate.google.com/translate_a/single?client=t&sl=en&tl=pl&dt=at&q='
 
 	var req = new XMLHttpRequest()
-	req.open('GET', translateUrl + escape(text), false)
+	req.open('GET', translateUrl + encodeURI(text), false)
 	req.send()
 
 	var resp = req.responseText
