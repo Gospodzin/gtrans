@@ -1,0 +1,19 @@
+.gtrans-view {
+position: fixed;
+left: 10px;
+top: 10px;
+z-index: 1024;
+}
+
+.basic-tl {
+font-size: 110%;
+margin-bottom: 5px;
+}
+
+.advanced-tl {
+margin-left: 5px;
+}
+
+.part-of-speech {
+font-style: italic;
+}

@@ -1,12 +1,11 @@
 var gtrans = new Object()
 
 gtrans.handleTranslate = function(text) {
-	var firstWord = text.trim().split(" ")[0].replace(/\W/g,"")
-	var translations = this.translate(firstWord)
-	var viewElem = this.createView(translations)
+	var translation = this.translate(text)
+	var viewElem = this.createView(translation)
 	this.cleanTranslationView()
 	this.show(viewElem)
-	this.playSound(firstWord)
+	this.playSound(text)
 }
 
 gtrans.playSound = function(text) {
@@ -14,38 +13,65 @@ gtrans.playSound = function(text) {
 }
 
 gtrans.show = function(viewElem) {
-	viewElem.style.position = "fixed"
-	viewElem.style.left = "10px"
-	viewElem.style.top = "10px"
-	viewElem.style.zIndex = 1<<10
-
 	var body = document.getElementsByTagName("body")[0]
 	body.appendChild(viewElem)
 }
 
-gtrans.createView = function(translations) {
+gtrans.createView = function(translation) {
 	var container = document.createElement("div")
 	container.className = "gtrans-view"
-	translations.forEach(function(e) {
+	
+	if(translation.basic) {
 		var elem = document.createElement("div")
- 		elem.innerText = e.word+" ["+e.freq+"]"
+		elem.className = "basic-tl"
+		elem.innerText = translation.basic[0]
+		container.appendChild(elem)
+	}
+
+	if(translation.advanced) translation.advanced.forEach(function(e) {
+		var elem = document.createElement("div")
+		elem.className = "part-of-speech"
+ 		elem.innerText = e[0]
  		container.appendChild(elem)
+		
+		e[1].forEach(function(f) {
+			var elem = document.createElement("div")
+			elem.className = "advanced-tl"
+	 		elem.innerText = f 	
+	 		container.appendChild(elem)	
+			})
 		})
+
 	return container
 }
 
 gtrans.translate = function(text) {
-	var translateUrl = 'https://translate.google.com/translate_a/single?client=t&sl=en&tl=pl&dt=at&q='
+	var translateUrl = 'https://translate.google.com/translate_a/single?client=t&sl=en&tl=pl&dt=bd&dt=t&q='
 
 	var req = new XMLHttpRequest()
 	req.open('GET', translateUrl + encodeURI(text), false)
 	req.send()
 
-	var resp = req.responseText
-	var cleanJson = resp.substr(10, resp.length-10-1)
-	var translation = JSON.parse(cleanJson)[0]
+	var respText = req.responseText
+	var resp = JSON.parse(respText.replace(/,,+/g,',').replace(/\[,/g,'[').replace(/,\]/g,']'))
+	
+	var basicTl 
+	var advancedTl
 
-	return translation[2].map(function(e){return {word: e[0], freq: e[1]}})
+	switch(resp.length) {
+	case 2:
+		if(typeof(resp[0][0][1]) == typeof('')) basicTl = resp[0][0]
+		else advancedTl = resp[1]
+		break;
+	case 3:
+		basicTl = resp[0][0]
+		advancedTl = resp[1]
+		break;
+	}
+
+	var translation = {basic: basicTl, advanced: advancedTl}
+
+	return translation
 }
 
 gtrans.cleanTranslationView = function() {
