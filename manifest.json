@@ -2,7 +2,11 @@
   "name": "GTrans",
   "description": "Translate selected words immediately.",
   "version": "1.0",
-  "permissions": ["contextMenus", "activeTab"],
+  "permissions": [
+		"contextMenus", 
+		"activeTab",
+		"file://*/*"
+	],
   "background": {
     "persistent": false,
     "scripts": ["gtrans_extension.js"]
