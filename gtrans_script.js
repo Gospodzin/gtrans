@@ -1,3 +1,17 @@
+var tkkCache = new Object()
+
+tkkCache.getTkk = function() {
+	if(!this._tkk) {
+		var req = new XMLHttpRequest();
+		req.open('GET', 'https://translate.google.pl/', false); 
+		req.send(null);
+		this._tkk = Number(req.response.match(/TKK='(\d+)'/)[1]);
+	}
+	return this._tkk;
+}
+
+tkkCache.getTkk();
+
 var gtrans = new Object()
 
 gtrans.handleTranslate = function(text) {
@@ -9,7 +23,9 @@ gtrans.handleTranslate = function(text) {
 }
 
 gtrans.playSound = function(text) {
-	new Audio('https://translate.google.pl/translate_tts?q='+encodeURI(text)+'&tl=en').play()
+	var tkk = tkkCache.getTkk();
+	var tk = this.genTk(text, tkk);
+	new Audio(`https://translate.google.pl/translate_tts?tl=en&client=t&tk=${tk}&q=${encodeURI(text)}`).play()
 }
 
 gtrans.show = function(viewElem) {
@@ -46,10 +62,14 @@ gtrans.createView = function(translation) {
 }
 
 gtrans.translate = function(text) {
-	var translateUrl = 'https://translate.google.com/translate_a/single?client=t&sl=en&tl=pl&dt=bd&dt=t&q='
+	var tkk = tkkCache.getTkk();
+	var tk = this.genTk(text, tkk);
+
+	var translateUrl = `https://translate.google.com/translate_a/single` + 
+			   `?client=t&sl=en&tl=pl&dt=bd&dt=t&tk=${tk}&q=${encodeURI(text)}`
 
 	var req = new XMLHttpRequest()
-	req.open('GET', translateUrl + encodeURI(text), false)
+	req.open('GET', translateUrl, false)
 	req.send()
 
 	var respText = req.responseText
@@ -77,6 +97,41 @@ gtrans.translate = function(text) {
 gtrans.cleanTranslationView = function() {
 	views =	document.getElementsByClassName("gtrans-view")
 	for (var i = 0; i < views.length; i++) views[i].remove()
+}
+
+gtrans.someTransform = function (someNum0, someStr) {
+    for (var i = 0; i < someStr.length - 2; i += 3) {
+        var someChar = someStr.charAt(i + 2);
+        var someNum1 = someChar >= "a" ? someChar.charCodeAt(0) - 87 : Number(someChar);
+        someNum1 = someStr.charAt(i + 1) == "+" ? someNum0 >>> someNum1 : someNum0 << someNum1;
+        someNum0 = someStr.charAt(i) == "+" ? someNum0 + someNum1 & 4294967295 : someNum0 ^ someNum1;
+    }
+    return someNum0;
+}
+
+gtrans.genTk = function (text, tkk) {
+    var someArr = [];
+    for (var i = 0, j = 0; i < text.length; i++) {
+        var charCode = text.charCodeAt(i);
+        128 > charCode
+            ? someArr[j++] = charCode
+            : (2048 > charCode
+            ? someArr[j++] = charCode >> 6 | 192
+            : (55296 == (charCode & 64512) && i + 1 < text.length && 56320 == (text.charCodeAt(i + 1) & 64512)
+            ? (charCode = 65536 + ((charCode & 1023) << 10) + (text.charCodeAt(++i) & 1023), someArr[j++] = charCode >> 18 | 240, someArr[j++] = charCode >> 12 & 63 | 128)
+            : someArr[j++] = charCode >> 12 | 224, someArr[j++] = charCode >> 6 & 63 | 128), someArr[j++] = charCode & 63 | 128)
+    }
+
+    var someNum = tkk;
+    for (i = 0; i < someArr.length; i++) {
+        someNum += someArr[i];
+        someNum = this.someTransform(someNum, "+-a^+6");
+    }
+
+    someNum = this.someTransform(someNum, "+-3^+b+-f");
+    0 > someNum && (someNum = (someNum & 2147483647) + 2147483648);
+    someNum %= 1E6;
+    return someNum + "." + (someNum ^ tkk);
 }
 
 window.addEventListener("click", function() {
