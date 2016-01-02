@@ -18,6 +18,11 @@ font-weight: bold;
 margin-left: 5px;
 }
 
+.phonetic {
+font-style: italic;
+margin-bottom: 3px;
+}
+
 .part-of-speech {
 font-style: italic;
 }

@@ -40,7 +40,14 @@ gtrans.createView = function(translation) {
 	if(translation.basic) {
 		var elem = document.createElement("div")
 		elem.className = "basic-tl"
-		elem.innerText = translation.basic[0]
+		elem.innerText = translation.basic
+		container.appendChild(elem)
+	}
+
+	if(translation.phonetic) {
+		var elem = document.createElement("div")
+		elem.className = "phonetic"
+		elem.innerText = '♫ ' + translation.phonetic
 		container.appendChild(elem)
 	}
 
@@ -66,7 +73,7 @@ gtrans.translate = function(text) {
 	var tk = this.genTk(text, tkk);
 
 	var translateUrl = `https://translate.google.com/translate_a/single` + 
-			   `?client=t&sl=en&tl=pl&dt=bd&dt=t&tk=${tk}&q=${encodeURI(text)}`
+			   `?client=t&sl=en&tl=pl&dt=bd&dt=t&dt=rm&tk=${tk}&q=${encodeURI(text)}`
 
 	var req = new XMLHttpRequest()
 	req.open('GET', translateUrl, false)
@@ -77,19 +84,21 @@ gtrans.translate = function(text) {
 	
 	var basicTl 
 	var advancedTl
+	var phonetic
 
 	switch(resp.length) {
 	case 2:
-		if(typeof(resp[0][0][1]) == typeof('')) basicTl = resp[0][0]
-		else advancedTl = resp[1]
+		if(typeof(resp[0][0][1]) == typeof('')) basicTl = resp[0][0][0];
+		else advancedTl = resp[1];
 		break;
 	case 3:
-		basicTl = resp[0][0]
-		advancedTl = resp[1]
+		basicTl = resp[0][0][0];
+		advancedTl = resp[1];
+		if(resp[0].length > 1) phonetic = resp[0][1][0];
 		break;
 	}
 
-	var translation = {basic: basicTl, advanced: advancedTl}
+	var translation = {basic: basicTl, advanced: advancedTl, phonetic: phonetic}
 
 	return translation
 }
